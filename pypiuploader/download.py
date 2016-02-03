@@ -4,6 +4,7 @@ import os
 import tempfile
 
 import pip
+from pip._vendor.packaging.version import parse as parse_version
 
 
 class PackageDownloader(object):
@@ -77,8 +78,13 @@ class PackageDownloader(object):
             requirements=None,
             requirements_file=None,
             no_use_wheel=False):
+
+        pip_command = 'download'
+        if parse_version(pip.__version__) < parse_version('8.0.0'):
+            pip_command = 'install'
+
         args = [
-            'install',
+            pip_command,
             '-d',
             self.download_path,
         ]
