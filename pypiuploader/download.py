@@ -5,6 +5,15 @@ import tempfile
 
 import pip
 from pip._vendor.packaging.version import parse as parse_version
+from pip.status_codes import SUCCESS
+
+
+class PackageDownloadErr(Exception):
+    def __init__(self, status, args):
+        Exception.__init__(self)
+        self.status = status
+        self.args = args
+        self.message = 'package failed download, exit %d. Arguments: %s' % (status, args)
 
 
 class PackageDownloader(object):
@@ -70,7 +79,11 @@ class PackageDownloader(object):
         """
         self._make_download_dir()
         args = self._build_args(requirements, requirements_file, no_use_wheel)
-        pip.main(args)
+        pip_result = pip.main(args)
+        if pip_result != SUCCESS:
+            raise PackageDownloadErr(pip_result, args)
+
+
         return self._list_download_dir()
 
     def _build_args(

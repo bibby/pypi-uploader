@@ -24,6 +24,7 @@ import pypiuploader
 from pypiuploader import download
 from pypiuploader import exceptions
 from pypiuploader import upload
+from pypiuploader.download import PackageDownloadErr
 
 
 def main(argv=None, stdout=None):
@@ -87,9 +88,13 @@ class Command(object):
         * Upload the packages
 
         """
-        uploader = self._make_uploader()
-        filenames = self._get_filenames()
-        self._upload_files(uploader, filenames)
+        try:
+            uploader = self._make_uploader()
+            filenames = self._get_filenames()
+            self._upload_files(uploader, filenames)
+        except PackageDownloadErr as e:
+            self._print(e.message)
+            exit(e.status)
 
     def _make_uploader(self):
         uploader = upload.PackageUploader.from_rc_file(
