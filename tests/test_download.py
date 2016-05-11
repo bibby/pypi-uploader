@@ -49,6 +49,12 @@ class TestPackageDownloader(object):
         downloader._make_download_dir()
         assert os.path.isdir(download_path)
 
+    def test_download_command_word(self):
+        downloader = download.PackageDownloader()
+        assert downloader.download_command_word('8.0.1') == 'download'
+        assert downloader.download_command_word('8.0.0') == 'download'
+        assert downloader.download_command_word('7.1.12') == 'install'
+
     def test_make_download_dir_when_not_set(self):
         downloader = download.PackageDownloader()
         downloader._make_download_dir()
@@ -59,12 +65,16 @@ class TestPackageDownloader(object):
     def test_build_args_with_requirements(self):
         downloader = download.PackageDownloader('/foo/bar')
         args = downloader._build_args(requirements=['requests==1.2.1', 'mock'])
-        assert args == ['install', '-d', '/foo/bar', 'requests==1.2.1', 'mock']
+        pip_command = downloader.download_command_word()
+        assert args == [pip_command, '-d', '/foo/bar',
+                        'requests==1.2.1', 'mock']
 
     def test_build_args_with_requirements_file(self):
         downloader = download.PackageDownloader('/foo/bar')
         args = downloader._build_args(requirements_file='requirements.txt')
-        assert args == ['install', '-d', '/foo/bar', '-r', 'requirements.txt']
+        pip_command = downloader.download_command_word()
+        assert args == [pip_command, '-d', '/foo/bar',
+                        '-r', 'requirements.txt']
 
     def test_build_args_without_arguments(self):
         downloader = download.PackageDownloader('/foo/bar')
@@ -76,8 +86,9 @@ class TestPackageDownloader(object):
         args = downloader._build_args(
             requirements_file='requirements.txt',
             no_use_wheel=True)
+        pip_command = downloader.download_command_word()
         assert args == [
-            'install',
+            pip_command,
             '-d', '/foo/bar',
             '--no-use-wheel',
             '-r', 'requirements.txt',
@@ -106,7 +117,8 @@ class TestPackageDownloader(object):
         downloaded = downloader.download(requirements=['mock'])
 
         assert sorted(list(downloaded)) == ['mock-1.0.1.tar.gz']
-        expected_call = mock.call(['install', '-d', download_path, 'mock'])
+        pip_command = downloader.download_command_word()
+        expected_call = mock.call([pip_command, '-d', download_path, 'mock'])
         assert pip_main_mock.call_args == expected_call
 
     @mock.patch('pip.main', autospec=True)
@@ -115,9 +127,9 @@ class TestPackageDownloader(object):
         downloader = download.PackageDownloader(download_path)
 
         downloader.download(requirements_file='requirements.txt')
-
+        pip_command = downloader.download_command_word()
         expected_call = mock.call(
-            ['install', '-d', download_path, '-r', 'requirements.txt'])
+            [pip_command, '-d', download_path, '-r', 'requirements.txt'])
         assert pip_main_mock.call_args == expected_call
 
     @mock.patch('pip.main', autospec=True)
@@ -129,8 +141,9 @@ class TestPackageDownloader(object):
             requirements_file='requirements.txt',
             no_use_wheel=True)
 
+        pip_command = downloader.download_command_word()
         expected_call = mock.call([
-            'install',
+            pip_command,
             '-d', download_path,
             '--no-use-wheel',
             '-r', 'requirements.txt',

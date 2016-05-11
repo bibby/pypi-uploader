@@ -73,16 +73,20 @@ class PackageDownloader(object):
         pip.main(args)
         return self._list_download_dir()
 
+    def download_command_word(self, pip_version=None):
+        pip_command = 'download'
+        pip_version = parse_version(pip_version or pip.__version__)
+        if pip_version < parse_version('8.0.0'):
+            pip_command = 'install'
+        return pip_command
+
     def _build_args(
             self,
             requirements=None,
             requirements_file=None,
             no_use_wheel=False):
 
-        pip_command = 'download'
-        if parse_version(pip.__version__) < parse_version('8.0.0'):
-            pip_command = 'install'
-
+        pip_command = self.download_command_word()
         args = [
             pip_command,
             '-d',
