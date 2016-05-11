@@ -136,7 +136,7 @@ class TestPackageUploader(object):
         with pytest.raises(requests.HTTPError) as exc:
             self.uploader._raise_for_status(response, 'foo.tar.gz')
 
-        assert str(exc.value) == '401 Client Error: Foo bar'
+        assert str(exc.value).startswith('401 Client Error: Foo bar')
         assert exc.value.response == response
 
     def test_raise_for_status_conflict_error(self):
